@@ -39,14 +39,14 @@ DATASET_ARG_TO_FULL_NAME_MAPPER: dict[str, str] = {
     "cps": "current_population_survey",
     "census": "decennial_census",
     "ssa": "social_security",
-    "taxes_1040": "taxes_1040",
+    "tax_1040": "taxes_1040",
     "taxes_w2_and_1099": "taxes_w2_and_1099",
     "wic": "women_infants_and_children",
 }
 
 SEED = 0
 CLI_DEFAULT_DATASET = "acs"
-CLI_DEFAULT_POP = "sample"
+CLI_DEFAULT_POP = "USA"
 CLI_DEFAULT_YEAR = 2020
 CLI_DEFAULT_STATE = None
 CLI_DEFAULT_ENGINE = "pandas"

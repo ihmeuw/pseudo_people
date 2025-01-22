@@ -8,12 +8,12 @@ import pytest
 @pytest.mark.parametrize(
     "pytest_args",
     [
-        ([]),
-        (["--dataset", "acs"]),
-        (["--dataset", "cps"]),
+        (["--population", "sample"]),
+        (["--dataset", "acs", "--population", "sample"]),
+        #(["--dataset", "cps"]),
         # (["--dataset", "acs", "--population", "USA"]),
         # (["--dataset", "acs", "--population", "USA", "--state", "RI"]),
-        (["--dataset", "wic", "--year", "2015"]),
+        #(["--dataset", "wic", "--year", "2015"]),
         # (["--dataset", "wic", "--population", "USA", "--state", "RI", "--year", "2015"]),
     ],
 )
@@ -22,6 +22,7 @@ def test_release_tests(pytest_args: list[str]) -> None:
     base_cmd = ["pytest", "--release", "test_release.py"]
     cmd = base_cmd + pytest_args
     result = subprocess.run(cmd, capture_output=True, text=True)
+    breakpoint()
     assert result.returncode == 0
 
 

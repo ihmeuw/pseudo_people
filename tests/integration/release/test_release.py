@@ -9,6 +9,7 @@ from vivarium_testing_utils import FuzzyChecker
 
 from pseudopeople.dataset import Dataset
 from pseudopeople.schema_entities import COLUMNS, DATASET_SCHEMAS
+from pytest_check import check
 from tests.constants import DATASET_GENERATION_FUNCS
 from tests.integration.conftest import IDX_COLS, _get_common_datasets, get_unnoised_data
 from tests.utilities import (
@@ -36,6 +37,7 @@ def test_column_noising(
 
 
 def test_row_noising_omit_row_or_do_not_respond(
+    unnoised_dataset: Dataset,
     noised_data: pd.DataFrame,
     dataset_name: str,
     config: dict[str, Any],
@@ -43,11 +45,10 @@ def test_row_noising_omit_row_or_do_not_respond(
 ) -> None:
     """Tests that omit_row and do_not_respond row noising are being applied"""
     idx_cols = IDX_COLS.get(dataset_name)
-    original = get_unnoised_data(dataset_name)
-    original_data = original.data.set_index(idx_cols)
+    unnoised_data = unnoised_dataset.data.set_index(idx_cols)
     noised_data = noised_data.set_index(idx_cols)
 
-    run_omit_row_or_do_not_respond_tests(dataset_name, config, original_data, noised_data)
+    run_omit_row_or_do_not_respond_tests(dataset_name, config, unnoised_data, noised_data)
 
 
 def test_unnoised_id_cols(dataset_name: str, request: FixtureRequest) -> None:
@@ -68,3 +69,13 @@ def test_unnoised_id_cols(dataset_name: str, request: FixtureRequest) -> None:
         .all()
         .all()
     )
+
+
+def test_example():
+    a = 1
+    b = 2
+    c = [2, 4, 6]
+    check.greater(a, b)
+    check.less_equal(b, a)
+    check.is_in(a, c, "Is 1 in the list")
+    check.is_not_in(b, c, "make sure 2 isn't in list")

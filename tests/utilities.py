@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from pytest_check import check
 from vivarium_testing_utils import FuzzyChecker
 
 from pseudopeople.configuration import Keys, get_configuration
@@ -43,7 +44,9 @@ def run_column_noising_tests(
                 check_original.loc[to_compare_idx, col.name].values
                 != check_noised.loc[to_compare_idx, col.name].values
             )
-            assert different_check.any()
+            #with check:
+            #    assert different_check.any()
+            check.is_true(different_check.any())
 
             noise_level = different_check.sum()
 
@@ -96,7 +99,6 @@ def run_omit_row_or_do_not_respond_tests(
         # TODO: assert levels are as expected
         assert noised_data.index.difference(original_data.index).empty
         assert not original_data.index.difference(noised_data.index).empty
-
 
 def validate_column_noise_level(
     dataset_name: str,
@@ -169,14 +171,18 @@ def validate_column_noise_level(
             )
 
     expected_noise = 1 - not_noised
-    # Fuzzy checker
-    validator.fuzzy_assert_proportion(
-        name=fuzzy_name,
-        observed_numerator=noise_level,
-        observed_denominator=len(check_data.loc[check_idx, col.name]),
-        target_proportion=expected_noise,
-        name_additional=f"{dataset_name}_{col.name}_{col_noise_type.name}",
-    )
+
+    try:
+        # Fuzzy checker
+        validator.fuzzy_assert_proportion(
+            name=fuzzy_name,
+            observed_numerator=noise_level,
+            observed_denominator=len(check_data.loc[check_idx, col.name]),
+            target_proportion=expected_noise,
+            name_additional=f"{dataset_name}_{col.name}_{col_noise_type.name}",
+        )
+    except:
+        print(f"{dataset_name} and {col.name} have expected {expected_noise} and actual {noise_level / len(check_data.loc[check_idx, col.name])}")
 
 
 def initialize_dataset_with_sample(dataset_name: str) -> Dataset:

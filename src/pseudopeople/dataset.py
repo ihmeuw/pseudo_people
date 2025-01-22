@@ -145,7 +145,10 @@ class Dataset:
                     # https://github.com/pandas-dev/pandas/issues/44764
                     # Year is already guaranteed to be 4-digit: https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-timestamp-limits
                     is_na = data[column].isna()
-                    data_column = data.loc[~is_na, column]
+                    try:
+                        data_column = pd.to_datetime(data.loc[~is_na, column])
+                    except:
+                        breakpoint()
                     year_string = data_column.dt.year.astype(str)
                     month_string = _zfill_fast(data_column.dt.month.astype(str), 2)
                     day_string = _zfill_fast(data_column.dt.day.astype(str), 2)
