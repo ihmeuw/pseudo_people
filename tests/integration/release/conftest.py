@@ -100,7 +100,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 ############
 # Fixtures #
 ############
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def release_output_dir(request: pytest.FixtureRequest) -> Path:
     output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)
     output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
@@ -158,6 +158,7 @@ def noised_data(
     if dataset_func != generate_social_security:
         kwargs["state"] = state
     profiling_dir = release_output_dir / "profiling"
+    profiling_dir.mkdir(parents=True, exist_ok=True)
     noised_data = profile_data_generation(profiling_dir)(dataset_func)(**kwargs)
     if engine == "dask":
         # mypy expects noised_data to be a series rather than dask object
