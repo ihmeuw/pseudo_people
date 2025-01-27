@@ -101,14 +101,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 # Fixtures #
 ############
 @pytest.fixture(scope="session")
-def release_output_dir(request: pytest.FixtureRequest) -> Path:
-    output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)
-    output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
-    output_dir.mkdir(parents=True, exist_ok=False)
-    return output_dir.resolve()
-
-
-@pytest.fixture(scope="session")
 def dataset_params(
     request: pytest.FixtureRequest,
 ) -> tuple[str | int | Callable[..., pd.DataFrame] | None, ...]:
@@ -139,7 +131,6 @@ def dataset_params(
 @pytest.fixture(scope="session")
 def noised_data(
     dataset_params: tuple[str | int | Callable[..., pd.DataFrame] | None, ...],
-    release_output_dir: Path,
     request: pytest.FixtureRequest,
     config: dict[str, Any],
 ) -> pd.DataFrame:
@@ -157,7 +148,8 @@ def noised_data(
     }
     if dataset_func != generate_social_security:
         kwargs["state"] = state
-    profiling_dir = release_output_dir / "profiling"
+    timestamped_dir = request.config.getoption("--output-dir")
+    profiling_dir = timestamped_dir / "profiling"
     profiling_dir.mkdir(parents=True, exist_ok=True)
     noised_data = profile_data_generation(profiling_dir)(dataset_func)(**kwargs)
     if engine == "dask":
