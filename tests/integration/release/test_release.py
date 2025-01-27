@@ -5,6 +5,7 @@ from typing import Any
 import pandas as pd
 import pytest
 from _pytest.fixtures import FixtureRequest
+from pytest_check import check
 from vivarium_testing_utils import FuzzyChecker
 
 from pseudopeople.dataset import Dataset

@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from pytest_check import check
 from vivarium_testing_utils import FuzzyChecker
 
 from pseudopeople.configuration import Keys, get_configuration
@@ -34,7 +35,8 @@ def run_column_noising_tests(
 
         # Check that originally missing data remained missing
         originally_missing_idx = check_original.index[check_original[col.name].isna()]
-        assert check_noised.loc[originally_missing_idx, col.name].isna().all()
+        with check:
+            assert check_noised.loc[originally_missing_idx, col.name].isna().all()
 
         # Check for noising where applicable
         to_compare_idx = shared_idx.difference(originally_missing_idx)
@@ -43,7 +45,8 @@ def run_column_noising_tests(
                 check_original.loc[to_compare_idx, col.name].values
                 != check_noised.loc[to_compare_idx, col.name].values
             )
-            assert different_check.any()
+            with check:
+                assert different_check.any()
 
             noise_level = different_check.sum()
 
@@ -64,7 +67,8 @@ def run_column_noising_tests(
                 == check_noised.loc[to_compare_idx, col.name].values
             )
 
-            assert same_check.all()
+            with check:
+                assert same_check.all()
 
 
 def run_omit_row_or_do_not_respond_tests(
@@ -87,15 +91,20 @@ def run_omit_row_or_do_not_respond_tests(
     ]:
         # Census and household surveys have do_not_respond and omit_row.
         # For all other datasets they are mutually exclusive
-        assert len(noise_types) == 2
+        with check:
+            assert len(noise_types) == 2
     else:
-        assert len(noise_types) < 2
+        with check:
+            assert len(noise_types) < 2
     if not noise_types:  # Check that there are no missing indexes
-        assert noised_data.index.symmetric_difference(original_data.index).empty
+        with check:
+            assert noised_data.index.symmetric_difference(original_data.index).empty
     else:  # Check that there are some omissions
         # TODO: assert levels are as expected
-        assert noised_data.index.difference(original_data.index).empty
-        assert not original_data.index.difference(noised_data.index).empty
+        with check:
+            assert noised_data.index.difference(original_data.index).empty
+        with check:
+            assert not original_data.index.difference(noised_data.index).empty
 
 
 def validate_column_noise_level(
@@ -158,7 +167,8 @@ def validate_column_noise_level(
                     [1 - p for p in token_probability]
                 )
             else:
-                assert isinstance(tokens_per_string, pd.Series)
+                with check:
+                    assert isinstance(tokens_per_string, pd.Series)
                 avg_probability_any_token_noised = (
                     1 - (1 - token_probability) ** tokens_per_string
                 ).mean()

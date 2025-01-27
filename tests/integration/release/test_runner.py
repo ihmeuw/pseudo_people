@@ -23,7 +23,7 @@ def test_release_tests(
     pytest_args: list[str], release_output_dir: Path, request: pytest.FixtureRequest
 ) -> None:
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
-    base_cmd = ["pytest", "--release", "test_release.py", f"--output-dir={release_output_dir}"]
+    base_cmd = ["pytest", "--release", "test_release.py", f"--output-dir={release_output_dir}", "--check-max-tb=1000"]
     cmd = base_cmd + pytest_args + ["--population", "USA"]
 
     # log using job id
