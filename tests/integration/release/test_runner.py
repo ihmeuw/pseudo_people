@@ -1,10 +1,11 @@
 import os
 import subprocess
+import time
 from pathlib import Path
-from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
 
 import pytest
-import time
+
+from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
 
 
 @pytest.mark.parametrize(
@@ -20,15 +21,19 @@ import time
     ],
     ids=["1", "2", "3"],
 )
-def test_release_tests(
-    pytest_args: list[str], request: pytest.FixtureRequest
-) -> None:
+def test_release_tests(pytest_args: list[str], request: pytest.FixtureRequest) -> None:
     output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)
     timestamped_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
     timestamped_dir.mkdir(parents=True, exist_ok=False)
 
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
-    base_cmd = ["pytest", "--release", "test_release.py", "--check-max-tb=1000", f"--output-dir={timestamped_dir}"]
+    base_cmd = [
+        "pytest",
+        "--release",
+        "test_release.py",
+        "--check-max-tb=1000",
+        f"--output-dir={timestamped_dir}",
+    ]
     cmd = base_cmd + pytest_args
 
     # log using job id
