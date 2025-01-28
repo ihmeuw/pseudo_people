@@ -215,8 +215,6 @@ def profile_data_generation(output_dir: Path) -> Callable[..., Callable[..., pd.
             )
             filename = f"{func.__name__}_resources.csv"
             output_path = output_dir / filename
-            with open('/ihme/homes/hjafari/ppl_profiling_dir.txt', 'w') as f:
-                f.write(str(output_path))
             resources.to_csv(output_path, index=False)
             return df
 

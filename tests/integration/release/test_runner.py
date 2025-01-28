@@ -10,16 +10,15 @@ import time
 @pytest.mark.parametrize(
     "pytest_args",
     [
-        #([]),
+        ([]),
         (["--dataset", "acs"]),
-        #(["--dataset", "cps"]),
+        (["--dataset", "cps"]),
         # (["--dataset", "acs", "--population", "USA"]),
         # (["--dataset", "acs", "--population", "USA", "--state", "RI"]),
         #(["--dataset", "wic", "--year", "2015"]),
         # (["--dataset", "wic", "--population", "USA", "--state", "RI", "--year", "2015"]),
     ],
-    #ids=["1", "2", "3", "4"],
-    ids = ['1'],
+    ids=["1", "2", "3", "4"],
 )
 def test_release_tests(
     pytest_args: list[str], request: pytest.FixtureRequest
@@ -30,14 +29,13 @@ def test_release_tests(
 
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
     base_cmd = ["pytest", "--release", "test_release.py", "--check-max-tb=1000", f"--output-dir={timestamped_dir}"]
-    cmd = base_cmd + pytest_args + ["--population", "USA", "-k", "unnoised"]
+    cmd = base_cmd + pytest_args
 
     # log using job id
     job_id = request.node.callspec.id
     log_dir = timestamped_dir.resolve() / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / f"pytest_{job_id}.o"
-    breakpoint()
     with open(log_file, "w") as file:
         subprocess.run(cmd, stdout=file)
 
