@@ -149,7 +149,7 @@ def noised_data(
     if dataset_func != generate_social_security:
         kwargs["state"] = state
     timestamped_dir = request.config.getoption("--output-dir")
-    profiling_dir = timestamped_dir / "profiling"
+    profiling_dir = Path(timestamped_dir) / "profiling"
     profiling_dir.mkdir(parents=True, exist_ok=True)
     noised_data = profile_data_generation(profiling_dir)(dataset_func)(**kwargs)
     if engine == "dask":
@@ -214,7 +214,9 @@ def profile_data_generation(output_dir: Path) -> Callable[..., Callable[..., pd.
                 index=[0],
             )
             filename = f"{func.__name__}_resources.csv"
-            output_path = os.path.join(output_dir, filename)
+            output_path = output_dir / filename
+            with open('/ihme/homes/hjafari/ppl_profiling_dir.txt', 'w') as f:
+                f.write(str(output_path))
             resources.to_csv(output_path, index=False)
             return df
 
