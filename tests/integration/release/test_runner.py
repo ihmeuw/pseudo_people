@@ -15,10 +15,10 @@ import time
         (["--dataset", "cps"]),
         # (["--dataset", "acs", "--population", "USA"]),
         # (["--dataset", "acs", "--population", "USA", "--state", "RI"]),
-        #(["--dataset", "wic", "--year", "2015"]),
+        (["--dataset", "wic", "--year", "2015"]),
         # (["--dataset", "wic", "--population", "USA", "--state", "RI", "--year", "2015"]),
     ],
-    ids=["1", "2", "3", "4"],
+    ids=["1", "2", "3"],
 )
 def test_release_tests(
     pytest_args: list[str], request: pytest.FixtureRequest
