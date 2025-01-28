@@ -19,7 +19,7 @@ from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
         (["--dataset", "wic", "--year", "2015"]),
         # (["--dataset", "wic", "--population", "USA", "--state", "RI", "--year", "2015"]),
     ],
-    ids=["1", "2", "3"],
+    ids=["1", "2", "3", "4"],
 )
 def test_release_tests(pytest_args: list[str], request: pytest.FixtureRequest) -> None:
     output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)
