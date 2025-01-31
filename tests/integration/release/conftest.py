@@ -75,21 +75,25 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--population",
         action="store",
+        default=CLI_DEFAULT_POP,
         help="The simulated population to generate. Options are 'USA', 'RI', and 'sample'. sample will generate very small sample data.",
     )
     parser.addoption(
         "--year",
         action="store",
+        default=CLI_DEFAULT_YEAR,
         help="The year to subset our data to.",
     )
     parser.addoption(
         "--state",
         action="store",
+        default=CLI_DEFAULT_STATE,
         help="The state to subset our data to (if using full USA population) using 2-letter abbreviations. No argument means no subsetting will be done.",
     )
     parser.addoption(
         "--engine",
         action="store",
+        default=CLI_DEFAULT_ENGINE,
         help="The engine used to generate data. Options are 'pandas' and 'dask'.",
     )
 
@@ -125,9 +129,9 @@ def dataset_params(
             f"population must be one of USA, RI, or sample. You passed in {population}."
         )
 
-    engine = request.config.getoption("--engine", default=CLI_DEFAULT_ENGINE)
-    state = request.config.getoption("--state", default=CLI_DEFAULT_STATE)
-    year = request.config.getoption("--year", default=CLI_DEFAULT_YEAR)
+    engine = request.config.getoption("--engine")
+    state = request.config.getoption("--state")
+    year = request.config.getoption("--year")
     year = int(year) if year is not None else year
 
     return dataset_name, dataset_func, source, year, state, engine
@@ -193,7 +197,7 @@ def unnoised_dataset(
 
 @pytest.fixture(scope="session")
 def dataset_name(request: pytest.FixtureRequest) -> str:
-    dataset_arg = request.config.getoption("--dataset", default=CLI_DEFAULT_DATASET)
+    dataset_arg = request.config.getoption("--dataset")
     return DATASET_ARG_TO_FULL_NAME_MAPPER[dataset_arg]
 
 
