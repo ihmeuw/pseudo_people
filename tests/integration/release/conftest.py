@@ -96,10 +96,8 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 # Fixtures #
 ############
 @pytest.fixture(scope="session")
-def release_output_dir() -> Path | None:
-    output_dir_name = request.config.getoption("--output-dir", default=None)
-    if not output_dir_name:
-        return None
+def release_output_dir(request: pytest.FixtureRequest) -> Path | None:
+    output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)
     output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
     output_dir.mkdir(parents=True, exist_ok=False)
     return output_dir.resolve()
@@ -135,8 +133,8 @@ def dataset_params(
 
 @pytest.fixture(scope="session")
 def noised_data(
-    release_output_dir: Path,
     dataset_params: tuple[str | int | Callable[..., pd.DataFrame] | None, ...],
+    release_output_dir: Path,
     request: pytest.FixtureRequest,
     config: dict[str, Any],
 ) -> pd.DataFrame:

@@ -22,15 +22,13 @@ from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
     ids=["1", "2", "3", "4"],
 )
 def test_release_tests(pytest_args: list[str], release_output_dir: Path, request: pytest.FixtureRequest) -> None:
-    if release_output_dir is None:
-        release_output_dir = Path(CLI_DEFAULT_OUTPUT_DIR) / f"{time.strftime('%Y%m%d_%H%M%S')}"
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
     base_cmd = [
         "pytest",
         "--release",
         "test_release.py",
         "--check-max-tb=1000",
-        f"--output-dir=={release_output_dir}"
+        f"--output-dir={release_output_dir}"
     ]
     cmd = base_cmd + pytest_args
 
