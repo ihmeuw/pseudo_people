@@ -67,6 +67,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         help=f"The output directory to write to. Defaults to {CLI_DEFAULT_OUTPUT_DIR}.",
     )
     parser.addoption(
+        "--from-runner",
+        action="store",
+        default=False,
+        help=f"Whether our pytest command was run using test_runner.",
+    )
+    parser.addoption(
         "--dataset",
         action="store",
         default=CLI_DEFAULT_DATASET,
@@ -103,6 +109,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 ############
 @pytest.fixture(scope="session")
 def release_output_dir(request: pytest.FixtureRequest) -> Path:
+    # don't create new directory if running using test_runner
+    if request.config.getoption("--from-runner"):
+        return None
+
     output_dir_name = request.config.getoption("--output-dir")
     output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
     output_dir.mkdir(parents=True, exist_ok=False)

@@ -28,7 +28,7 @@ def test_release_tests(pytest_args: list[str], release_output_dir: Path, request
         "--release",
         "test_release.py",
         "--check-max-tb=1000",
-        f"--output-dir={release_output_dir}"
+        "--from-runner",
     ]
     cmd = base_cmd + pytest_args
 
