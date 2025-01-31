@@ -46,8 +46,9 @@ DATASET_ARG_TO_FULL_NAME_MAPPER: dict[str, str] = {
 
 SEED = 0
 CLI_DEFAULT_OUTPUT_DIR = (
-    "/mnt/team/simulation_science/priv/engineering/pseudopeople_release_testing"
+    "/mnt/team/simulation_science/priv/engineering/pseudopeople/release_testing"
 )
+# some of these defaults are here for ease of testing and will be removed later
 CLI_DEFAULT_DATASET = "acs"
 CLI_DEFAULT_POP = "sample"
 CLI_DEFAULT_YEAR = 2020
@@ -62,37 +63,31 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--output-dir",
         action="store",
-        default=CLI_DEFAULT_OUTPUT_DIR,
-        help="The output directory to write to. Defaults to /mnt/team/simulation_science/priv/engineering/pseudopeople_release_testing.",
+        help=f"The output directory to write to. Defaults to {CLI_DEFAULT_OUTPUT_DIR}.",
     )
     parser.addoption(
         "--dataset",
         action="store",
-        default=CLI_DEFAULT_DATASET,
         help="The dataset to generate. Options are 'census', 'acs', 'cps', 'ssa', 'tax_w2_1099', 'wic', and 'tax_1040'. No argument will default to acs.",
     )
     parser.addoption(
         "--population",
         action="store",
-        default=CLI_DEFAULT_POP,
         help="The simulated population to generate. Options are 'USA', 'RI', and 'sample'. sample will generate very small sample data.",
     )
     parser.addoption(
         "--year",
         action="store",
-        default=CLI_DEFAULT_YEAR,
         help="The year to subset our data to.",
     )
     parser.addoption(
         "--state",
         action="store",
-        default=CLI_DEFAULT_STATE,
         help="The state to subset our data to (if using full USA population) using 2-letter abbreviations. No argument means no subsetting will be done.",
     )
     parser.addoption(
         "--engine",
         action="store",
-        default=CLI_DEFAULT_ENGINE,
         help="The engine used to generate data. Options are 'pandas' and 'dask'.",
     )
 
@@ -100,6 +95,16 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 ############
 # Fixtures #
 ############
+@pytest.fixture(scope="session")
+def release_output_dir() -> Path | None:
+    output_dir_name = request.config.getoption("--output-dir", default=None)
+    if not output_dir_name:
+        return None
+    output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
+    output_dir.mkdir(parents=True, exist_ok=False)
+    return output_dir.resolve()
+
+
 @pytest.fixture(scope="session")
 def dataset_params(
     request: pytest.FixtureRequest,
@@ -130,6 +135,7 @@ def dataset_params(
 
 @pytest.fixture(scope="session")
 def noised_data(
+    release_output_dir: Path,
     dataset_params: tuple[str | int | Callable[..., pd.DataFrame] | None, ...],
     request: pytest.FixtureRequest,
     config: dict[str, Any],
@@ -148,8 +154,7 @@ def noised_data(
     }
     if dataset_func != generate_social_security:
         kwargs["state"] = state
-    timestamped_dir = request.config.getoption("--output-dir")
-    profiling_dir = Path(timestamped_dir) / "profiling"
+    profiling_dir = Path(release_output_dir) / "profiling"
     profiling_dir.mkdir(parents=True, exist_ok=True)
     noised_data = profile_data_generation(profiling_dir)(dataset_func)(**kwargs)
     if engine == "dask":
