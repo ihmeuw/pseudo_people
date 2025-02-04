@@ -21,7 +21,9 @@ from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
     ],
     ids=["1", "2", "3", "4"],
 )
-def test_release_tests(pytest_args: list[str], request: pytest.FixtureRequest, release_output_dir) -> None:
+def test_release_tests(
+    pytest_args: list[str], release_output_dir: Path, request: pytest.FixtureRequest
+) -> None:
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
     base_cmd = [
         "pytest",
