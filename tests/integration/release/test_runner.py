@@ -21,14 +21,16 @@ from tests.integration.release.conftest import CLI_DEFAULT_OUTPUT_DIR
     ],
     ids=["1", "2", "3", "4"],
 )
-def test_release_tests(pytest_args: list[str], release_output_dir: Path, request: pytest.FixtureRequest) -> None:
+def test_release_tests(pytest_args: list[str], request: pytest.FixtureRequest, release_output_dir) -> None:
     os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
     base_cmd = [
         "pytest",
         "--release",
         "test_release.py",
         "--check-max-tb=1000",
-        "--from-runner",
+        "--population",
+        "USA",
+        f"--output-dir={release_output_dir}"
     ]
     cmd = base_cmd + pytest_args
 
@@ -36,14 +38,15 @@ def test_release_tests(pytest_args: list[str], release_output_dir: Path, request
     job_id = request.node.callspec.id
     log_dir = release_output_dir / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"pytest_{job_id}.o"
+    log_file = Path(log_dir) / f"pytest_{job_id}.o"
+    
     with open(log_file, "w") as file:
         subprocess.run(cmd, stdout=file)
 
 
 @pytest.mark.parametrize("dataset", ["acs", "cps"])
 def test_slow_tests(dataset: str) -> None:
-    os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
-    cmd = ["pytest", "--runslow", "test_release.py", "--dataset", dataset]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    assert result.returncode == 0
+   os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
+   cmd = ["pytest", "--runslow", "test_release.py", "--dataset", dataset]
+   result = subprocess.run(cmd, capture_output=True, text=True)
+   assert result.returncode == 0
