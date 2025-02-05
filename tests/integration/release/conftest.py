@@ -102,6 +102,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 # Fixtures #
 ############
 
+
 @pytest.fixture(scope="session")
 def release_output_dir(request: pytest.FixtureRequest) -> Path:
     output_dir_name = request.config.getoption("--output-dir", default=CLI_DEFAULT_OUTPUT_DIR)

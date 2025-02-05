@@ -32,7 +32,7 @@ def test_release_tests(
         "--check-max-tb=1000",
         "--population",
         "USA",
-        f"--output-dir={release_output_dir}"
+        f"--output-dir={release_output_dir}",
     ]
     cmd = base_cmd + pytest_args
 
@@ -41,14 +41,14 @@ def test_release_tests(
     log_dir = release_output_dir / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = Path(log_dir) / f"pytest_{job_id}.o"
-    
+
     with open(log_file, "w") as file:
         subprocess.run(cmd, stdout=file)
 
 
 @pytest.mark.parametrize("dataset", ["acs", "cps"])
 def test_slow_tests(dataset: str) -> None:
-   os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
-   cmd = ["pytest", "--runslow", "test_release.py", "--dataset", dataset]
-   result = subprocess.run(cmd, capture_output=True, text=True)
-   assert result.returncode == 0
+    os.chdir(Path(__file__).parent)  # need this to access cli options from conftest.py
+    cmd = ["pytest", "--runslow", "test_release.py", "--dataset", dataset]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    assert result.returncode == 0
