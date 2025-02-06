@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from functools import cache
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -23,10 +26,10 @@ def scale_choose_wrong_option(data: pd.DataFrame, column_name: str) -> float:
     return noise_scaling_value
 
 
-def scale_nicknames(data: pd.DataFrame, column_name: str) -> float:
+def scale_nicknames(data: pd.DataFrame, column_name: str) -> Any:
     # Constant calculated by number of names with nicknames / number of names used in PRL name mapping
     nicknames = load_nicknames_data()
-    proportion_have_nickname = (
+    proportion_have_nickname: float = (
         data[column_name].isin(nicknames.index).sum() / data[column_name].notna().sum()
     )
     if proportion_have_nickname == 0.0:
@@ -34,12 +37,12 @@ def scale_nicknames(data: pd.DataFrame, column_name: str) -> float:
     return 1 / proportion_have_nickname
 
 
-def scale_copy_from_household_member(data: pd.DataFrame, column_name: str) -> float:
+def scale_copy_from_household_member(data: pd.DataFrame, column_name: str) -> Any:
     original_column = data[column_name]
     copy_column = data[COPY_HOUSEHOLD_MEMBER_COLS[column_name]]
     original_column_not_missing = (original_column != "") & (original_column.notna())
     eligible = (copy_column != "") & (copy_column.notna()) & original_column_not_missing
-    proportion_eligible = eligible.sum() / original_column_not_missing.sum()
+    proportion_eligible: float = eligible.sum() / original_column_not_missing.sum()
     if proportion_eligible == 0.0:
         return 0.0
     return 1 / proportion_eligible
@@ -51,7 +54,7 @@ def scale_copy_from_household_member(data: pd.DataFrame, column_name: str) -> fl
 
 
 @cache
-def load_nicknames_data():
+def load_nicknames_data() -> pd.DataFrame:
     # Load and format nicknames dataset
     nicknames = pd.read_csv(paths.NICKNAMES_DATA)
     nicknames = nicknames.apply(lambda x: x.astype(str).str.title()).set_index("name")
@@ -59,7 +62,7 @@ def load_nicknames_data():
     return nicknames
 
 
-def get_options_for_column(column_name: str) -> pd.Series:
+def get_options_for_column(column_name: str) -> pd.Series[Any]:
     """
     For a column that has a set list of options, returns that set of options as
     a Series.

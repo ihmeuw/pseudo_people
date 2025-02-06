@@ -6,22 +6,39 @@ pseudopeople is a Python package that generates realistic simulated data about a
 fictional United States population, designed for use in testing entity resolution
 (record linkage) methods or other data science algorithms at scale.
 
-**pseudopeople requires Python 3.10-3.11 to run**
+.. _python_support:
 
-You can install pseudopeople from PyPI with pip:
+**Supported Python versions: 3.10, 3.11**
 
-  ``> pip install pseudopeople``
+.. _end_python_support:
 
-or build it from source with
+Installation
+============
 
-  ``> git clone https://github.com/ihmeuw/pseudopeople.git``
+.. _installation:
 
-  ``> cd pseudopeople``
+Once Python is installed, you can install pseudopeople with `pip <https://pip.pypa.io/en/stable/>`_ 
+by running the command:
 
-  ``> python setup.py install``
+.. highlight:: console
+
+::
+
+  $ pip install pseudopeople
+
+Or, you can install from source on `the pseudopeople GitHub repository <https://github.com/ihmeuw/pseudopeople>`_.
+
+.. highlight:: console
+
+::
+
+  $ pip install git+https://github.com/ihmeuw/pseudopeople.git
+
+.. _end_installation:
 
 Documentation
-======================
+=============
+
 You can view documentation at https://pseudopeople.readthedocs.io/en/latest/
 
 To receive updates about this software package `join the mailing list

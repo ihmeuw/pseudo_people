@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple
 
 from pseudopeople.constants.metadata import DATEFORMATS, DatasetNames
 from pseudopeople.dtypes import DtypeNames
@@ -10,7 +12,7 @@ from pseudopeople.noise_entities import NOISE_TYPES
 @dataclass
 class Column:
     name: str
-    noise_types: Tuple[ColumnNoiseType, ...] = tuple()
+    noise_types: tuple[ColumnNoiseType, ...] = tuple()
     dtype_name: str = DtypeNames.OBJECT  # string dtype is 'object'
 
 
@@ -582,19 +584,19 @@ COLUMNS = __Columns()
 
 
 @dataclass
-class Dataset:
+class DatasetSchema:
     name: str
-    columns: Tuple[Column, ...]  # This defines the output column order
+    columns: tuple[Column, ...]  # This defines the output column order
     date_column_name: str
     date_format: str
-    state_column_name: Optional[str]
-    row_noise_types: Tuple[RowNoiseType, ...]
+    state_column_name: str | None
+    row_noise_types: tuple[RowNoiseType, ...]
 
 
-class __Datasets(NamedTuple):
+class __DatasetSchemas(NamedTuple):
     """NamedTuple that contains information about datasets and their related columns"""
 
-    census: Dataset = Dataset(
+    census: DatasetSchema = DatasetSchema(
         DatasetNames.CENSUS,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -626,7 +628,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.MM_DD_YYYY,
     )
-    acs: Dataset = Dataset(
+    acs: DatasetSchema = DatasetSchema(
         DatasetNames.ACS,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -657,7 +659,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.MM_DD_YYYY,
     )
-    cps: Dataset = Dataset(
+    cps: DatasetSchema = DatasetSchema(
         DatasetNames.CPS,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -686,7 +688,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.MM_DD_YYYY,
     )
-    wic: Dataset = Dataset(
+    wic: DatasetSchema = DatasetSchema(
         DatasetNames.WIC,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -713,7 +715,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.MMDDYYYY,
     )
-    ssa: Dataset = Dataset(
+    ssa: DatasetSchema = DatasetSchema(
         DatasetNames.SSA,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -734,7 +736,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.YYYYMMDD,
     )
-    tax_w2_1099: Dataset = Dataset(
+    tax_w2_1099: DatasetSchema = DatasetSchema(
         DatasetNames.TAXES_W2_1099,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -770,7 +772,7 @@ class __Datasets(NamedTuple):
         ),
         date_format=DATEFORMATS.MM_DD_YYYY,
     )
-    tax_1040: Dataset = Dataset(
+    tax_1040: DatasetSchema = DatasetSchema(
         DatasetNames.TAXES_1040,
         columns=(  # This defines the output column order
             COLUMNS.simulant_id,
@@ -815,9 +817,9 @@ class __Datasets(NamedTuple):
     ##################
 
     @staticmethod
-    def get_dataset(name: str) -> Dataset:
-        """Return the respective Dataset object given the dataset name"""
-        return [d for d in DATASETS if d.name == name][0]
+    def get_dataset_schema(name: str) -> DatasetSchema:
+        """Return the respective DatasetSchema object given the dataset name"""
+        return [d for d in DATASET_SCHEMAS if d.name == name][0]
 
 
-DATASETS = __Datasets()
+DATASET_SCHEMAS = __DatasetSchemas()

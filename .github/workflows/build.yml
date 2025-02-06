@@ -1,6 +1,6 @@
 # -----------------------------------------------------------------------------
 #   - invoked on push, pull_request, manual trigger, or schedule
-#   - test under at least 3 versions of python
+#   - test under all supported versions of python (python_versions.json)
 # -----------------------------------------------------------------------------
 name: build
 on:
@@ -24,4 +24,3 @@ jobs:
     secrets:
       notify_email: ${{ secrets.NOTIFY_EMAIL }}
       NOTIFY_PASSWORD: ${{ secrets.NOTIFY_PASSWORD }}
-    

@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
+from _pytest.legacypath import TempdirFactory
 
 from pseudopeople.configuration import Keys, get_configuration
-from pseudopeople.configuration.entities import NO_NOISE
 from pseudopeople.constants import paths
 from pseudopeople.constants.metadata import DatasetNames
+from pseudopeople.dataset import Dataset
 from pseudopeople.interface import (
-    _coerce_dtypes,
-    _reformat_dates_for_noising,
     generate_american_community_survey,
     generate_current_population_survey,
     generate_decennial_census,
@@ -19,7 +21,8 @@ from pseudopeople.interface import (
     generate_women_infants_and_children,
 )
 from pseudopeople.noise_entities import NOISE_TYPES
-from pseudopeople.schema_entities import COLUMNS, DATASETS
+from pseudopeople.schema_entities import COLUMNS, DATASET_SCHEMAS
+from pseudopeople.utilities import coerce_dtypes
 
 ROW_PROBABILITY = 0.05
 CELL_PROBABILITY = 0.25
@@ -28,17 +31,17 @@ STATE = "RI"
 
 # TODO: Replace this with the record ID column when implemented (MIC-4039)
 IDX_COLS = {
-    DATASETS.census.name: [COLUMNS.simulant_id.name, COLUMNS.year.name],
-    DATASETS.acs.name: [COLUMNS.simulant_id.name, COLUMNS.survey_date.name],
-    DATASETS.cps.name: [COLUMNS.simulant_id.name, COLUMNS.survey_date.name],
-    DATASETS.wic.name: [COLUMNS.simulant_id.name, COLUMNS.year.name],
-    DATASETS.ssa.name: [COLUMNS.simulant_id.name, COLUMNS.ssa_event_type.name],
-    DATASETS.tax_w2_1099.name: [
+    DATASET_SCHEMAS.census.name: [COLUMNS.simulant_id.name, COLUMNS.year.name],
+    DATASET_SCHEMAS.acs.name: [COLUMNS.simulant_id.name, COLUMNS.survey_date.name],
+    DATASET_SCHEMAS.cps.name: [COLUMNS.simulant_id.name, COLUMNS.survey_date.name],
+    DATASET_SCHEMAS.wic.name: [COLUMNS.simulant_id.name, COLUMNS.year.name],
+    DATASET_SCHEMAS.ssa.name: [COLUMNS.simulant_id.name, COLUMNS.ssa_event_type.name],
+    DATASET_SCHEMAS.tax_w2_1099.name: [
         COLUMNS.simulant_id.name,
         COLUMNS.tax_year.name,
         COLUMNS.employer_id.name,
     ],
-    DATASETS.tax_1040.name: [
+    DATASET_SCHEMAS.tax_1040.name: [
         COLUMNS.simulant_id.name,
         COLUMNS.tax_year.name,
     ],
@@ -46,7 +49,7 @@ IDX_COLS = {
 
 
 @pytest.fixture(scope="session")
-def split_sample_data_dir(tmpdir_factory):
+def split_sample_data_dir(tmpdir_factory: TempdirFactory) -> Path:
     datasets = [
         DatasetNames.CENSUS,
         DatasetNames.ACS,
@@ -84,8 +87,10 @@ def split_sample_data_dir(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
-def split_sample_data_dir_state_edit(tmpdir_factory, split_sample_data_dir):
-    # This replace our old tmpdir fixture we were using because this more accurately
+def split_sample_data_dir_state_edit(
+    tmpdir_factory: TempdirFactory, split_sample_data_dir: Path
+) -> Path:
+    # This replaces our old tmpdir fixture we were using because this more accurately
     # represents our sample data directory structure with a subdirectory for each
     # dataset and storing all files in the fixture.
     datasets = [
@@ -117,21 +122,21 @@ def split_sample_data_dir_state_edit(tmpdir_factory, split_sample_data_dir):
 
 
 @pytest.fixture(scope="module")
-def config():
+def config() -> dict[str, Any]:
     """Returns a custom configuration dict to be used in noising"""
     config = get_configuration().to_dict()  # default config
 
     # Increase row noise probabilities to 5% and column cell_probabilities to 25%
     for dataset_name in config:
-        dataset = DATASETS.get_dataset(dataset_name)
-        config[dataset.name][Keys.ROW_NOISE] = {
+        dataset_schema = DATASET_SCHEMAS.get_dataset_schema(dataset_name)
+        config[dataset_schema.name][Keys.ROW_NOISE] = {
             noise_type.name: {
                 Keys.ROW_PROBABILITY: ROW_PROBABILITY,
             }
-            for noise_type in dataset.row_noise_types
+            for noise_type in dataset_schema.row_noise_types
             if noise_type != NOISE_TYPES.duplicate_with_guardian
         }
-        for col in [c for c in dataset.columns if c.noise_types]:
+        for col in [c for c in dataset_schema.columns if c.noise_types]:
             config[dataset_name][Keys.COLUMN_NOISE][col.name] = {
                 noise_type.name: {
                     Keys.CELL_PROBABILITY: CELL_PROBABILITY,
@@ -144,14 +149,16 @@ def config():
     # This is because we want to be able to compare the noised and unnoised data
     # and a big assumption we make is that simulant_id and household_id are the
     # truth decks in our datasets.
-    config[DATASETS.census.name][Keys.ROW_NOISE][NOISE_TYPES.duplicate_with_guardian.name] = {
+    config[DATASET_SCHEMAS.census.name][Keys.ROW_NOISE][
+        NOISE_TYPES.duplicate_with_guardian.name
+    ] = {
         Keys.ROW_PROBABILITY_IN_HOUSEHOLDS_UNDER_18: 0.0,
         Keys.ROW_PROBABILITY_IN_COLLEGE_GROUP_QUARTERS_UNDER_24: 0.0,
     }
     # Update SSA dataset to noise 'ssn' but NOT noise 'ssa_event_type' since that
     # will be used as an identifier along with simulant_id
     # TODO: Noise ssa_event_type when record IDs are implemented (MIC-4039)
-    config[DATASETS.ssa.name][Keys.COLUMN_NOISE][COLUMNS.ssa_event_type.name] = {
+    config[DATASET_SCHEMAS.ssa.name][Keys.COLUMN_NOISE][COLUMNS.ssa_event_type.name] = {
         noise_type.name: {
             Keys.CELL_PROBABILITY: 0,
         }
@@ -160,90 +167,40 @@ def config():
     return config
 
 
-# Un-noised 1040
-@pytest.fixture(scope="session")
-def formatted_1040_sample_data():
-    formatted_1040 = generate_taxes_1040(seed=SEED, year=None, config=NO_NOISE)
-    return formatted_1040
-
-
 # Noised sample datasets
 @pytest.fixture(scope="module")
-def noised_sample_data_decennial_census(config):
+def noised_sample_data_decennial_census(config: dict[str, Any]) -> pd.DataFrame:
     return generate_decennial_census(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_american_community_survey(config):
+def noised_sample_data_american_community_survey(config: dict[str, Any]) -> pd.DataFrame:
     return generate_american_community_survey(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_current_population_survey(config):
+def noised_sample_data_current_population_survey(config: dict[str, Any]) -> pd.DataFrame:
     return generate_current_population_survey(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_women_infants_and_children(config):
+def noised_sample_data_women_infants_and_children(config: dict[str, Any]) -> pd.DataFrame:
     return generate_women_infants_and_children(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_social_security(config):
+def noised_sample_data_social_security(config: dict[str, Any]) -> pd.DataFrame:
     return generate_social_security(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_taxes_w2_and_1099(config):
+def noised_sample_data_taxes_w2_and_1099(config: dict[str, Any]) -> pd.DataFrame:
     return generate_taxes_w2_and_1099(seed=SEED, year=None, config=config)
 
 
 @pytest.fixture(scope="module")
-def noised_sample_data_taxes_1040(config):
+def noised_sample_data_taxes_1040(config: dict[str, Any]) -> pd.DataFrame:
     return generate_taxes_1040(seed=SEED, year=None, config=config)
-
-
-# Raw sample datasets with half from a specific state, for state filtering
-@pytest.fixture(scope="module")
-def sample_data_decennial_census_state_edit():
-    data = _load_sample_data(DATASETS.census.name)
-    # Set half of the entries to the state we'll filter on
-    data.loc[data.reset_index().index % 2 == 0, DATASETS.census.state_column_name] = STATE
-    return data
-
-
-@pytest.fixture(scope="module")
-def sample_data_american_community_survey_state_edit():
-    data = _load_sample_data(DATASETS.acs.name)
-    # Set half of the entries to the state we'll filter on
-    data.loc[data.reset_index().index % 2 == 0, DATASETS.acs.state_column_name] = STATE
-    return data
-
-
-@pytest.fixture(scope="module")
-def sample_data_current_population_survey_state_edit():
-    data = _load_sample_data(DATASETS.cps.name)
-    # Set half of the entries to the state we'll filter on
-    data.loc[data.reset_index().index % 2 == 0, DATASETS.cps.state_column_name] = STATE
-    return data
-
-
-@pytest.fixture(scope="module")
-def sample_data_women_infants_and_children_state_edit():
-    data = _load_sample_data(DATASETS.wic.name)
-    # Set half of the entries to the state we'll filter on
-    data.loc[data.reset_index().index % 2 == 0, DATASETS.wic.state_column_name] = STATE
-    return data
-
-
-@pytest.fixture(scope="module")
-def sample_data_taxes_w2_and_1099_state_edit():
-    data = _load_sample_data(DATASETS.tax_w2_1099.name)
-    # Set half of the entries to the state we'll filter on
-    data.loc[
-        data.reset_index().index % 2 == 0, DATASETS.tax_w2_1099.state_column_name
-    ] = STATE
-    return data
 
 
 ####################
@@ -251,28 +208,34 @@ def sample_data_taxes_w2_and_1099_state_edit():
 ####################
 
 
-def _load_sample_data(dataset, request):
-    if dataset == DatasetNames.TAXES_1040:
-        # We need to get formatted 1040 data that is not noised to get the expected columns
-        data = request.getfixturevalue("formatted_1040_sample_data")
-    else:
-        data_path = paths.SAMPLE_DATA_ROOT / dataset / f"{dataset}.parquet"
-        data = pd.read_parquet(data_path)
-
-    return data
+def get_unnoised_data(dataset_name: str) -> Dataset:
+    result = _initialize_dataset_with_sample(dataset_name)
+    result.data = coerce_dtypes(result.data, result.dataset_schema)
+    return result
 
 
-def _get_common_datasets(dataset_name, data, noised_data):
+def _initialize_dataset_with_sample(dataset_name: str) -> Dataset:
+    dataset_schema = DATASET_SCHEMAS.get_dataset_schema(dataset_name)
+    data_path = paths.SAMPLE_DATA_ROOT / dataset_name / f"{dataset_name}.parquet"
+    dataset = Dataset(dataset_schema, pd.read_parquet(data_path), SEED)
+
+    return dataset
+
+
+def _get_common_datasets(
+    unnoised_dataset: Dataset, noised_dataset: pd.DataFrame
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Index[int]]:
     """Use unique columns to determine shared non-NA rows between noised and
     unnoised data. Note that we cannot use the original index because that
     gets reset after noising, i.e. the unique columns must NOT be noised.
     """
-    idx_cols = IDX_COLS.get(dataset_name)
-    dataset = DATASETS.get_dataset(dataset_name)
-    check_original = _coerce_dtypes(
-        _reformat_dates_for_noising(data, dataset), dataset
-    ).set_index(idx_cols)
-    check_noised = noised_data.set_index(idx_cols)
+    idx_cols = IDX_COLS.get(unnoised_dataset.dataset_schema.name)
+    unnoised_dataset._reformat_dates_for_noising()
+    unnoised_dataset.data = coerce_dtypes(
+        unnoised_dataset.data, unnoised_dataset.dataset_schema
+    )
+    check_original = unnoised_dataset.data.set_index(idx_cols)
+    check_noised = noised_dataset.set_index(idx_cols)
     # Ensure the idx_cols are unique
     assert check_original.index.duplicated().sum() == 0
     assert check_noised.index.duplicated().sum() == 0

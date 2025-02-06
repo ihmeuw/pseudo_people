@@ -1,6 +1,6 @@
 **1.2.1 - 02/05/25**
 
- - Get python versions from python_versions.json
+ - Implement centralized build utilities
 
 **1.2.0 - 11/14/24**
 

@@ -17,14 +17,18 @@ import sys
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 from pathlib import Path
 
+from docutils import nodes
 from docutils.nodes import Text
+from sphinx.addnodes import literal_emphasis, pending_xref
+from sphinx.application import Sphinx
+from sphinx.environment import BuildEnvironment
 from sphinx.ext.intersphinx import missing_reference
 
 import pseudopeople
 
 base_dir = Path(pseudopeople.__file__).parent
 
-about = {}
+about: dict[str, str] = {}
 with (base_dir / "__about__.py").open() as f:
     exec(f.read(), about)
 
@@ -87,7 +91,7 @@ language = "en"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -140,7 +144,7 @@ htmlhelp_basename = f'{about["__title__"]}doc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
@@ -237,22 +241,3 @@ for line in open("../nitpick-exceptions"):
     dtype, target = line.split(None, 1)
     target = target.strip()
     nitpick_ignore.append((dtype, target))
-
-
-# Fix sphinx warnings when for literal Ellipses in type hints.
-def setup(app):
-    app.connect("missing-reference", __sphinx_issue_8127)
-
-
-def __sphinx_issue_8127(app, env, node, contnode):
-    reftarget = node.get("reftarget", None)
-    if reftarget == "..":
-        node["reftype"] = "data"
-        node["reftarget"] = "Ellipsis"
-        text_node = next(iter(contnode.traverse(lambda n: n.tagname == "#text")))
-        replacement_node = Text("...", "")
-        if text_node.parent is not None:
-            text_node.parent.replace(text_node, replacement_node)
-        else:  # e.g. happens in rtype fields
-            contnode = replacement_node
-        return missing_reference(app, env, node, contnode)

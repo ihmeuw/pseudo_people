@@ -8,6 +8,7 @@ from pseudopeople import (
 )
 from pseudopeople.configuration import Keys
 from pseudopeople.entity_types import ColumnNoiseType, RowNoiseType
+from pseudopeople.noise_level import get_apply_do_not_respond_noise_level
 
 
 class __NoiseTypes(NamedTuple):
@@ -29,9 +30,12 @@ class __NoiseTypes(NamedTuple):
             Keys.ROW_PROBABILITY_IN_HOUSEHOLDS_UNDER_18: 0.02,
             Keys.ROW_PROBABILITY_IN_COLLEGE_GROUP_QUARTERS_UNDER_24: 0.05,
         },
+        get_noise_level=lambda *_: 1.0,
     )
     do_not_respond: RowNoiseType = RowNoiseType(
-        "do_not_respond", noise_functions.apply_do_not_respond
+        "do_not_respond",
+        noise_functions.apply_do_not_respond,
+        get_noise_level=get_apply_do_not_respond_noise_level,
     )
     omit_row: RowNoiseType = RowNoiseType("omit_row", noise_functions.omit_rows)
     # duplicate_row: RowNoiseType = RowNoiseType("duplicate_row", noise_functions.duplicate_rows)
@@ -114,4 +118,4 @@ class __NoiseTypes(NamedTuple):
     )
 
 
-NOISE_TYPES = __NoiseTypes()
+NOISE_TYPES: __NoiseTypes = __NoiseTypes()

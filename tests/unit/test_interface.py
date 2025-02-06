@@ -1,8 +1,9 @@
 from pathlib import Path
 
 import pytest
-import yaml
+from _pytest.tmpdir import TempPathFactory
 from packaging.version import parse
+from pytest_mock import MockerFixture
 
 from pseudopeople.constants.metadata import DatasetNames
 from pseudopeople.exceptions import DataSourceError
@@ -10,14 +11,14 @@ from pseudopeople.interface import (
     _get_data_changelog_version,
     validate_source_compatibility,
 )
-from pseudopeople.schema_entities import DATASETS
+from pseudopeople.schema_entities import DATASET_SCHEMAS
 
-CENSUS = DATASETS.get_dataset(DatasetNames.CENSUS)
+CENSUS = DATASET_SCHEMAS.get_dataset_schema(DatasetNames.CENSUS)
 
 
 # TODO [MIC-4546]: stop hardcoding the data version number
 @pytest.fixture(scope="module")
-def simulated_data_changelog_path(tmp_path_factory):
+def simulated_data_changelog_path(tmp_path_factory: TempPathFactory) -> Path:
     """Returns the path to where simualted data would live alongside their
     respective CHANGELOG.rst. This fixture creates the changelog but does
     not actually contain any simulated data.
@@ -43,33 +44,33 @@ def simulated_data_changelog_path(tmp_path_factory):
     return Path(tmp_path)
 
 
-def test__get_data_changelog_version(simulated_data_changelog_path):
+def test__get_data_changelog_version(simulated_data_changelog_path: Path) -> None:
     """Test that the data version is extracted from the CHANGELOG correctly"""
     assert _get_data_changelog_version(
         simulated_data_changelog_path / "CHANGELOG.rst"
     ) == parse("1.4.2")
 
 
-def mock_data_version(version, mocker):
+def mock_data_version(version: str, mocker: MockerFixture) -> None:
     mocker.patch(
         "pseudopeople.interface._get_data_changelog_version", return_value=parse(version)
     )
 
 
-def test_validate_source_compatibility_passes(simulated_data_changelog_path):
+def test_validate_source_compatibility_passes(simulated_data_changelog_path: Path) -> None:
     """Baseline test for validate_source_compatibility function"""
     validate_source_compatibility(simulated_data_changelog_path, CENSUS)
 
 
-def test_validate_source_compatibility_no_changelog_error(tmpdir):
-    no_changelog_dir = tmpdir.mkdir("no_changelog")
+def test_validate_source_compatibility_no_changelog_error(tmp_path: Path) -> None:
+    no_changelog_dir = tmp_path / "no_changelog"
     # No changelog is made
-    no_changelog_dir.mkdir(CENSUS.name)
+    (no_changelog_dir / CENSUS.name).mkdir(parents=True)
     with pytest.raises(
         DataSourceError,
         match="An older version of simulated population data has been provided.",
     ):
-        validate_source_compatibility(Path(no_changelog_dir), CENSUS)
+        validate_source_compatibility(no_changelog_dir, CENSUS)
 
 
 @pytest.mark.parametrize(
@@ -81,14 +82,14 @@ def test_validate_source_compatibility_no_changelog_error(tmpdir):
     ],
 )
 def test_validate_source_compatibility_bad_version_errors(
-    version, match, simulated_data_changelog_path, mocker
-):
+    version: str, match: str, simulated_data_changelog_path: Path, mocker: MockerFixture
+) -> None:
     mock_data_version(version, mocker)
     with pytest.raises(DataSourceError, match=match):
         validate_source_compatibility(simulated_data_changelog_path, CENSUS)
 
 
-def test_validate_source_compatibility_wrong_directory(tmp_path):
+def test_validate_source_compatibility_wrong_directory(tmp_path: Path) -> None:
     bad_path = tmp_path / "wrong_directory"
     bad_path.mkdir()
     with pytest.raises(FileNotFoundError, match="Could not find 'decennial_census' in"):

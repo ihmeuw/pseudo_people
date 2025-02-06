@@ -6,3 +6,22 @@ line_length = 94
 
 [tool.isort]
 profile = "black"
+known_third_party = [
+    "layered_config_tree",
+]
+
+[tool.mypy]
+# This is the global mypy configuration.
+strict = true  # See all the enabled flags `mypy --help | grep -A 10 'Strict mode'`
+disallow_any_unimported = false
+implicit_reexport = true
+exclude = [
+    "build",
+]
+
+# handle mypy errors when 3rd party packages are not typed.
+[[tool.mypy.overrides]]
+module = [
+    "scipy.*",
+]
+ignore_missing_imports = true

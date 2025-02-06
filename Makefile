@@ -12,4 +12,3 @@ PACKAGE_NAME = pseudopeople
 # Include makefiles from vivarium_build_utils
 include $(MAKE_INCLUDES)/base.mk
 include $(MAKE_INCLUDES)/test.mk
-

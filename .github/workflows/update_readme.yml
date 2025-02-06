@@ -1,0 +1,32 @@
+# -----------------------------------------------------------------------------
+#   - invoked on push to any branch
+# -----------------------------------------------------------------------------
+name: update README
+on: push
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Update README
+        run: |
+          pip install packaging
+          python update_readme.py
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions"
+          git diff --quiet && git diff --staged --quiet || (
+            git add README.rst
+            git commit -am "update README with supported Python versions"
+            git pull --rebase origin ${{ github.ref_name }}
+            git push origin ${{ github.ref_name }}
+          )
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
