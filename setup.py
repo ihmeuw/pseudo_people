@@ -70,6 +70,7 @@ if __name__ == "__main__":
 
     test_requirements = [
         "pytest",
+        "pytest-check",
         "pytest-cov",
         "pytest-mock",
         "vivarium_testing_utils",
