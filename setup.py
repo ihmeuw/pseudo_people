@@ -5,9 +5,8 @@ from pathlib import Path
 from packaging.version import parse
 from setuptools import find_packages, setup
 
-f = open("python_versions.json")
-supported_python_versions = json.load(f)
-f.close()
+with open("python_versions.json", "r") as f:
+    supported_python_versions = json.load(f)
 
 python_versions = [parse(v) for v in supported_python_versions]
 min_version = min(python_versions)
@@ -20,7 +19,7 @@ if not (min_version <= active_version <= max_version):
     error = (
         "\n----------------------------------------\n"
         "Error: Pseudopeople runs under python {min_version}-{max_version}.\n"
-        "You are running python {py_version}".format(
+        "You are running python {py_version}\n".format(
             min_version=min_version.base_version,
             max_version=max_version.base_version,
             py_version=py_version,
@@ -50,7 +49,6 @@ if __name__ == "__main__":
         "tqdm",
         "layered_config_tree>=2.1.0",
         "loguru",
-        "pytest_check",
         # type stubs
         "pandas-stubs",
         "types-PyYAML",
@@ -72,15 +70,14 @@ if __name__ == "__main__":
 
     test_requirements = [
         "pytest",
+        "pytest-cov",
         "pytest-mock",
         "vivarium_testing_utils",
-        "memory_profiler",
     ] + dask_requirements
 
     lint_requirements = [
         "black==22.3.0",
-        "isort",
-        "mypy",
+        "isort==5.13.2",
     ]
 
     doc_requirements = [

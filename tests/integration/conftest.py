@@ -207,8 +207,6 @@ def noised_sample_data_taxes_1040(config: dict[str, Any]) -> pd.DataFrame:
 ####################
 # HELPER FUNCTIONS #
 ####################
-
-
 def get_unnoised_data(dataset_name: str) -> Dataset:
     result = initialize_dataset_with_sample(dataset_name)
     result.data = coerce_dtypes(result.data, result.dataset_schema)

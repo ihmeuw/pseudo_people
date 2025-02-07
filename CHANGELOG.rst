@@ -1,6 +1,6 @@
-**TBD - TBD**
+**1.2.1 - 02/05/25**
 
- - Use script to find matching dependency branches
+ - Implement centralized build utilities
 
 **1.2.0 - 11/14/24**
 

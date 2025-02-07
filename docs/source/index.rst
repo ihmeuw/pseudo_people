@@ -45,16 +45,15 @@ out more about the principles and processes underlying this work.
 Quickstart
 ----------
 
-pseudopeople requires a version of `Python <https://www.python.org/>`_ between 3.8 and 3.11 (inclusive) to be installed.
-Once Python is installed, you can install pseudopeople with `pip <https://pip.pypa.io/en/stable/>`_ by running the command:
+pseudopeople requires a supported version of `Python <https://www.python.org/>`_ to be installed.
 
-.. highlight:: console
+.. include:: ../../README.rst 
+   :start-after: .. _python_support:
+   :end-before: .. _end_python_support:
 
-::
-
-   $ pip install pseudopeople
-
-Or, you can install from source on `the pseudopeople GitHub repository <https://github.com/ihmeuw/pseudopeople>`_.
+.. include:: ../../README.rst
+   :start-after: .. _installation:
+   :end-before: .. _end_installation:
 
 Then, generate a small-scale simulated decennial census:
 
