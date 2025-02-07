@@ -45,6 +45,10 @@ DATASET_ARG_TO_FULL_NAME_MAPPER: dict[str, str] = {
 }
 
 SEED = 0
+CLI_DEFAULT_OUTPUT_DIR = (
+    "/mnt/team/simulation_science/priv/engineering/pseudopeople/release_testing"
+)
+# some of these defaults are here for ease of testing and will be removed later
 CLI_DEFAULT_DATASET = "acs"
 CLI_DEFAULT_POP = "sample"
 CLI_DEFAULT_YEAR = 2020
@@ -56,6 +60,12 @@ SOURCE_MAPPER = {"usa": FULL_USA_FILEPATH, "ri": RI_FILEPATH, "sample": None}
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--output-dir",
+        action="store",
+        default=CLI_DEFAULT_OUTPUT_DIR,
+        help=f"The output directory to write to. Defaults to {CLI_DEFAULT_OUTPUT_DIR}.",
+    )
     parser.addoption(
         "--dataset",
         action="store",
@@ -91,15 +101,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 ############
 # Fixtures #
 ############
+
+
 @pytest.fixture(scope="session")
-def release_output_dir() -> Path:
-    # TODO: [MIC-5522] define correct output dir
-    # output_dir = os.environ.get("PSP_TEST_OUTPUT_DIR")
-    output_dir_name = (
-        "/mnt/team/simulation_science/priv/engineering/pseudopeople_release_testing"
-    )
-    # if not output_dir_name:
-    #     raise ValueError("PSP_TEST_OUTPUT_DIR environment variable not set")
+def release_output_dir(request: pytest.FixtureRequest) -> Path:
+    output_dir_name = request.config.getoption("--output-dir")
     output_dir = Path(output_dir_name) / f"{time.strftime('%Y%m%d_%H%M%S')}"
     output_dir.mkdir(parents=True, exist_ok=False)
     return output_dir.resolve()
@@ -109,7 +115,7 @@ def release_output_dir() -> Path:
 def dataset_params(
     request: pytest.FixtureRequest,
 ) -> tuple[str | int | Callable[..., pd.DataFrame] | None, ...]:
-    dataset_name = request.config.getoption("--dataset", default=CLI_DEFAULT_DATASET)
+    dataset_name = request.config.getoption("--dataset")
     try:
         dataset_func = DATASET_GENERATION_FUNCS[dataset_name]
     except KeyError:
@@ -125,9 +131,9 @@ def dataset_params(
             f"population must be one of USA, RI, or sample. You passed in {population}."
         )
 
-    engine = request.config.getoption("--engine", default=CLI_DEFAULT_ENGINE)
-    state = request.config.getoption("--state", default=CLI_DEFAULT_STATE)
-    year = request.config.getoption("--year", default=CLI_DEFAULT_YEAR)
+    engine = request.config.getoption("--engine")
+    state = request.config.getoption("--state")
+    year = request.config.getoption("--year")
     year = int(year) if year is not None else year
 
     return dataset_name, dataset_func, source, year, state, engine
@@ -136,7 +142,6 @@ def dataset_params(
 @pytest.fixture(scope="session")
 def noised_data(
     dataset_params: tuple[str | int | Callable[..., pd.DataFrame] | None, ...],
-    release_output_dir: Path,
     request: pytest.FixtureRequest,
     config: dict[str, Any],
 ) -> pd.DataFrame:
@@ -154,7 +159,12 @@ def noised_data(
     }
     if dataset_func != generate_social_security:
         kwargs["state"] = state
-    noised_data = profile_data_generation(release_output_dir)(dataset_func)(**kwargs)
+
+    # get timestamped dir that was defined in test_runner
+    timestamped_dir = request.config.getoption("--output-dir")
+    profiling_dir = Path(timestamped_dir) / "profiling"
+    profiling_dir.mkdir(parents=True, exist_ok=True)
+    noised_data = profile_data_generation(profiling_dir)(dataset_func)(**kwargs)
     if engine == "dask":
         # mypy expects noised_data to be a series rather than dask object
         noised_data = noised_data.compute()  # type: ignore [operator]
@@ -191,7 +201,7 @@ def unnoised_dataset(
 
 @pytest.fixture(scope="session")
 def dataset_name(request: pytest.FixtureRequest) -> str:
-    dataset_arg = request.config.getoption("--dataset", default=CLI_DEFAULT_DATASET)
+    dataset_arg = request.config.getoption("--dataset")
     return DATASET_ARG_TO_FULL_NAME_MAPPER[dataset_arg]
 
 
@@ -217,7 +227,7 @@ def profile_data_generation(output_dir: Path) -> Callable[..., Callable[..., pd.
                 index=[0],
             )
             filename = f"{func.__name__}_resources.csv"
-            output_path = os.path.join(output_dir, filename)
+            output_path = output_dir / filename
             resources.to_csv(output_path, index=False)
             return df
 

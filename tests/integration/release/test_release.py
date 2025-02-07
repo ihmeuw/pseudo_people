@@ -40,7 +40,6 @@ def test_row_noising_omit_row_or_do_not_respond(
     noised_data: pd.DataFrame,
     dataset_name: str,
     config: dict[str, Any],
-    request: FixtureRequest,
 ) -> None:
     """Tests that omit_row and do_not_respond row noising are being applied"""
     idx_cols = IDX_COLS.get(dataset_name)
