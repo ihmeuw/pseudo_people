@@ -69,7 +69,7 @@ if __name__ == "__main__":
     dask_requirements = ["dask[distributed,dataframe]"]
 
     test_requirements = [
-        "memory_profiler"
+        "memory_profiler",
         "pytest",
         "pytest-check",
         "pytest-cov",
