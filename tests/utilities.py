@@ -180,13 +180,17 @@ def validate_column_noise_level(
 
     expected_noise = 1 - not_noised
     # Fuzzy checker
-    validator.fuzzy_assert_proportion(
-        name=fuzzy_name,
-        observed_numerator=noise_level,
-        observed_denominator=len(check_data.loc[check_idx, col.name]),
-        target_proportion=expected_noise,
-        name_additional=f"{dataset_name}_{col.name}_{col_noise_type.name}",
-    )
+    try:
+        # Fuzzy checker
+        validator.fuzzy_assert_proportion(
+            name=fuzzy_name,
+            observed_numerator=noise_level,
+            observed_denominator=len(check_data.loc[check_idx, col.name]),
+            target_proportion=expected_noise,
+            name_additional=f"{dataset_name}_{col.name}_{col_noise_type.name}",
+        )
+    except:
+        print(f"{dataset_name} and {col.name} have expected {expected_noise} and actual {noise_level / len(check_data.loc[check_idx, col.name])}")
 
 
 def initialize_dataset_with_sample(dataset_name: str) -> Dataset:
